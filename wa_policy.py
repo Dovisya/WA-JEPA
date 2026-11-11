@@ -1,4 +1,4 @@
-"""CEM-free receding-horizon deployment policy for WA-JEPA V4."""
+"""CEM-free receding-horizon deployment policy for WA-JEPA."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ import torch
 
 from stable_worldmodel.policy import BasePolicy
 
-from wa_jepa_v4 import WorldActionJEPAV4
+from wa_jepa import WorldActionJEPA
 
 
-class WorldActionRecedingHorizonPolicyV4(BasePolicy):
+class WorldActionRecedingHorizonPolicy(BasePolicy):
     """Plan 25 steps once and execute a configurable number of 5-step blocks."""
 
     def __init__(
         self,
-        model: WorldActionJEPAV4,
+        model: WorldActionJEPA,
         execute_blocks: int = 5,
         device: str = "cuda",
         adaptive_horizon: bool = False,
@@ -30,7 +30,7 @@ class WorldActionRecedingHorizonPolicyV4(BasePolicy):
                 f"execute_blocks must be in [1, {model.cfg.horizon}], "
                 f"got {execute_blocks}"
             )
-        self.type = "wa_jepa_v4"
+        self.type = "wa_jepa"
         self.model = model.to(device).eval().requires_grad_(False)
         self.execute_blocks = execute_blocks
         self.device = torch.device(device)
@@ -208,7 +208,7 @@ class WorldActionRecedingHorizonPolicyV4(BasePolicy):
             raise RuntimeError("Policy environment is not configured")
         if "proprio" not in info_dict:
             raise KeyError(
-                "WA-JEPA V4 requires robot proprioception in info_dict['proprio']"
+                "WA-JEPA requires robot proprioception in info_dict['proprio']"
             )
         pixels = np.asarray(info_dict["pixels"])
         proprio = np.asarray(info_dict["proprio"])

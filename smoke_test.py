@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import DataLoader
 from train_tasks import TASKS, load_task_data, make_loss, seed_all
 from train_pusht import finite_column
-from wa_jepa_v4 import WorldActionJEPAV4
+from wa_jepa import WorldActionJEPA
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
         )
         batch = {k: v.cuda() for k, v in batch.items()}
         torch.cuda.reset_peak_memory_stats()
-        model = WorldActionJEPAV4(
+        model = WorldActionJEPA(
             history_size=cfg["history"],
             raw_action_dim=cfg["action_dim"],
             proprio_dim=cfg["proprio_dim"],
@@ -99,7 +99,7 @@ def main():
         with tempfile.TemporaryDirectory() as temp:
             file = Path(temp) / "smoke.pt"
             model.save_weights(file, epoch=0, metadata={"is_smoke_test": True})
-            restored, payload = WorldActionJEPAV4.load_weights(file)
+            restored, payload = WorldActionJEPA.load_weights(file)
             restored.cuda().eval()
             with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
                 replay = restored.plan(pixels, proprio, goal)

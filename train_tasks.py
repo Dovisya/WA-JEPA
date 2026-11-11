@@ -1,8 +1,8 @@
-"""V4-1 on TwoRoom/Cube: only SIGReg removed; automatic evaluation every epoch.
+"""Train WA-JEPA on TwoRoom or Cube with per-epoch evaluation.
 
-Architecture and losses follow V4-1. Input dimensions/history adapt to
-each task. Preserve baseline window split membership, filtering only windows
-too short for V4's five future blocks. No PushT task checkpoint is loaded.
+Input dimensions and history adapt to each task. Preserve the benchmark
+window split membership, filtering windows without five future chunks.
+Only the frozen visual encoder is initialized from pretrained weights.
 """
 
 import argparse
@@ -24,8 +24,8 @@ import stable_worldmodel as swm
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from train_pusht import WAJEPAV4LitModule, finite_column, sha256_file
-from wa_jepa_v4 import WorldActionJEPAV4
+from train_pusht import WAJEPALitModule, finite_column, sha256_file
+from wa_jepa import WorldActionJEPA
 from runtime_utils import atomic_json
 from task_evaluation import evaluate_checkpoint
 
@@ -51,7 +51,7 @@ def duration(seconds):
 
 
 def baseline_aligned_split(dataset, history, seed=3072):
-    """Use EXACT baseline random split; map its surviving starts into V4 indices."""
+    """Use EXACT baseline random split; map its surviving starts into WA-JEPA window indices."""
     lengths = np.asarray(dataset.lengths, dtype=np.int64)
     base_counts = np.maximum(0, lengths - (history + 1) * 5 + 1)
     long_counts = np.maximum(0, lengths - (history + 5) * 5 + 1)
@@ -69,7 +69,7 @@ def baseline_aligned_split(dataset, history, seed=3072):
     subsets = []
     metadata = dict(
         baseline_windows=len(mapping),
-        v4_windows=len(dataset),
+        model_windows=len(dataset),
         split="baseline random-window 90/10; NOT episode-level",
     )
     for name, subset in zip(("train", "val"), original):
@@ -113,7 +113,7 @@ def load_task_data(task, root):
         if not len(values):
             raise ValueError(f"Empty finite column: {key}")
         if key == "action" and (values.min() < -1.0001 or values.max() > 1.0001):
-            raise ValueError("Action bounds differ from V4 [-1,1]")
+            raise ValueError("Action bounds differ from WA-JEPA [-1,1]")
         stats[key] = (
             torch.from_numpy(values.mean(0)),
             torch.from_numpy(values.std(0)).clamp_min(1e-6),
@@ -127,7 +127,7 @@ def load_task_data(task, root):
 
 
 def make_loss(model, root):
-    return WAJEPAV4LitModule(
+    return WAJEPALitModule(
         model=model,
         run_dir=str(root),
         learning_rate=5e-5,
@@ -234,7 +234,7 @@ def main():
         train_set, shuffle=True, drop_last=True, generator=rng, **loader
     )
     val_loader = DataLoader(val_set, shuffle=False, drop_last=False, **loader)
-    model = WorldActionJEPAV4(
+    model = WorldActionJEPA(
         history_size=cfg["history"],
         raw_action_dim=cfg["action_dim"],
         proprio_dim=cfg["proprio_dim"],
@@ -253,7 +253,7 @@ def main():
     scheduler = make_scheduler(optimizer, max(2, epochs * train_batches))
     config = dict(
         task=args.task,
-        architecture="WA-JEPA V4-1",
+        architecture="WA-JEPA",
         model=model.model_config,
         data_path=str(data_path),
         data_size=data_path.stat().st_size,
@@ -289,7 +289,7 @@ def main():
         source_sha256={
             name: sha256_file(Path(__file__).with_name(name))
             for name in (
-                "wa_jepa_v4.py",
+                "wa_jepa.py",
                 "train_pusht.py",
                 "train_tasks.py",
                 "runtime_utils.py",
@@ -405,7 +405,7 @@ def main():
             elapsed_seconds=time.perf_counter() - started,
         )
         payload = dict(
-            format="wa_jepa_v4",
+            format="wa_jepa",
             epoch=epoch,
             model_config=model.model_config,
             model_state_dict=model.state_dict(),

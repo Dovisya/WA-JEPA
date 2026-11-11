@@ -1,9 +1,12 @@
 {
-  "wa_jepa_v4.py": "ed6984546fc8ddf89c45629f9105a1f75a734fe3d3f0ed4f4cff268c3b9b0840",
-  "wa_policy_v4.py": "bc306d43049cba062667428df426f6be3b6fbf695b0f7e4d506f95349a7bc9ac",
-  "train_wa_jepa_v4.py": "f79d17cb3a68578db37d37d64c3e079e92980d969e212949761c04e878bc2c16",
-  "train_wa_jepa_v4_1.py": "dab138015c7166d166413c15451b48dd4dcedca7f075ad69fca9d3428de04757",
-  "train_wa_jepa_v4_1_tasks.py": "1e56d04143d4f24a6898092945dba14750d0d633d0d169652e0b002c77eadb69",
-  "eval_wa_jepa_v4_pusht.py": "49bdb7063ec315d2398908a53083d2c9000a4bec65d43cd4f36dc658da7651d9",
-  "eval_wa_jepa_v4_tasks.py": "80d53e0598576b065ebf467432c2891034451eb9848de676e6e6bd550b982255"
+  "description": "SHA-256 of the original experiment source snapshots, identified by role (not the current release files).",
+  "sources": {
+    "network_architecture": "ed6984546fc8ddf89c45629f9105a1f75a734fe3d3f0ed4f4cff268c3b9b0840",
+    "deployment_policy": "bc306d43049cba062667428df426f6be3b6fbf695b0f7e4d506f95349a7bc9ac",
+    "shared_training_objectives": "f79d17cb3a68578db37d37d64c3e079e92980d969e212949761c04e878bc2c16",
+    "pusht_training_entry": "dab138015c7166d166413c15451b48dd4dcedca7f075ad69fca9d3428de04757",
+    "task_training_entry": "1e56d04143d4f24a6898092945dba14750d0d633d0d169652e0b002c77eadb69",
+    "pusht_evaluation": "49bdb7063ec315d2398908a53083d2c9000a4bec65d43cd4f36dc658da7651d9",
+    "task_evaluation": "80d53e0598576b065ebf467432c2891034451eb9848de676e6e6bd550b982255"
+  }
 }

@@ -1,6 +1,6 @@
 # WA-JEPA — Short-Horizon Goal Reaching
 
-Code for the **WA-JEPA V4-1** short-horizon experiments on **PushT, TwoRoom, and OGBench-Cube**. V4-1 uses the V4 network and removes SIGReg during training.
+Code for the **WA-JEPA** short-horizon experiments on **PushT, TwoRoom, and OGBench-Cube**.
 
 This release contains the network, training objectives, deployment policy, data preparation, and evaluation entry points. It does not include full-task policy heads, long-horizon planning, alternative architectures, datasets, checkpoints, or experiment logs.
 
@@ -129,8 +129,8 @@ Smoke checkpoints are marked and refused for normal benchmark scoring. `--allow-
 
 | File | Role |
 |---|---|
-| `wa_jepa_v4.py` | Frozen visual encoder, representation fusion, action proposals, world model, two feedback paths |
-| `wa_policy_v4.py` | Observation history and action buffering for environment execution |
+| `wa_jepa.py` | Frozen visual encoder, representation fusion, action proposals, world model, two feedback paths |
+| `wa_policy.py` | Observation history and action buffering for environment execution |
 | `train_pusht.py` | Shared training losses and PushT training |
 | `train_tasks.py` | TwoRoom/Cube data preparation, original split and training loop |
 | `eval_pusht.py` / `eval_tasks.py` | Short-horizon environment evaluation |
@@ -139,7 +139,7 @@ Smoke checkpoints are marked and refused for normal benchmark scoring. `--allow-
 | `config/eval/` | TwoRoom/Cube evaluation protocols |
 | `prepare_pusht.py` / `smoke_test.py` | Data conversion and integration checks |
 
-Legacy V2/V3 implementations are not required. The `V4` class names and checkpoint format are retained for compatibility with existing V4-1 weights.
+The public model and policy are `WorldActionJEPA` and `WorldActionRecedingHorizonPolicy`. New checkpoints use the `wa_jepa` format; existing experiment checkpoints remain loadable without conversion.
 
 ## Acknowledgments
 

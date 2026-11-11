@@ -1,6 +1,6 @@
 # Third-party notices
 
-This directory was prepared from the WA-JEPA V4-1 short-horizon implementation in the LeWorldModel repository. The upstream LeWorldModel MIT copyright and permission notice is retained verbatim in `LICENSE`.
+This directory was prepared from the WA-JEPA short-horizon implementation in the LeWorldModel repository. The upstream LeWorldModel MIT copyright and permission notice is retained verbatim in `LICENSE`.
 
 External dependencies are not bundled:
 

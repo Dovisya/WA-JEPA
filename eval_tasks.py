@@ -22,8 +22,8 @@ from omegaconf import OmegaConf
 import torch
 
 from runtime_utils import ChunkedPlanner, sha256_file
-from wa_jepa_v4 import WorldActionJEPAV4
-from wa_policy_v4 import WorldActionRecedingHorizonPolicyV4
+from wa_jepa import WorldActionJEPA
+from wa_policy import WorldActionRecedingHorizonPolicy
 
 
 class CubeProprioAliases(gym.Wrapper):
@@ -49,7 +49,7 @@ class CubeProprioAliases(gym.Wrapper):
         return observation, reward, terminated, truncated, self.alias(info)
 
 
-class TaskPolicy(WorldActionRecedingHorizonPolicyV4):
+class TaskPolicy(WorldActionRecedingHorizonPolicy):
     def __init__(self, *args, proprio_columns, expected_initial_proprio, **kwargs):
         super().__init__(*args, **kwargs)
         self.proprio_columns = proprio_columns
@@ -118,7 +118,7 @@ def main():
         torch.cuda.set_per_process_memory_fraction(args.cuda_memory_fraction)
     torch.set_num_threads(4)
     torch.set_float32_matmul_precision("high")
-    model, payload = WorldActionJEPAV4.load_weights(args.checkpoint)
+    model, payload = WorldActionJEPA.load_weights(args.checkpoint)
     provenance = payload["training_provenance"]
     if (payload.get("is_smoke_test") and not args.allow_smoke) or provenance[
         "task"
@@ -240,7 +240,7 @@ def main():
         executed_steps=policy._step_count.tolist(),
         planner_forward_calls=policy.forward_calls,
         privileged_state_used_by_model=False,
-        planner="original V4 direct policy, no CEM/search",
+        planner="WA-JEPA direct policy, no CEM/search",
         success_rate=float(metrics["success_rate"]),
         episode_successes=np.asarray(metrics["episode_successes"])
         .astype(bool)

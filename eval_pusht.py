@@ -1,4 +1,4 @@
-"""Evaluate WA-JEPA V4 on Push-T without CEM or online action search."""
+"""Evaluate WA-JEPA on Push-T without CEM or online action search."""
 
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ import stable_worldmodel as swm
 import torch
 
 from runtime_utils import episode_lengths, ChunkedPlanner
-from wa_jepa_v4 import WorldActionJEPAV4
-from wa_policy_v4 import WorldActionRecedingHorizonPolicyV4
+from wa_jepa import WorldActionJEPA
+from wa_policy import WorldActionRecedingHorizonPolicy
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,7 +57,7 @@ def main() -> None:
     if not 1 <= args.execute_blocks <= 5:
         raise ValueError("--execute-blocks must be between 1 and 5")
     torch.set_float32_matmul_precision("high")
-    model, payload = WorldActionJEPAV4.load_weights(args.checkpoint)
+    model, payload = WorldActionJEPA.load_weights(args.checkpoint)
     is_smoke = payload.get(
         "is_smoke_test", payload.get("metadata", {}).get("is_smoke_test", False)
     )
@@ -66,7 +66,7 @@ def main() -> None:
     if args.inference_batch_size < 1:
         raise ValueError("Inference batch size must be positive")
     model = ChunkedPlanner(model, args.inference_batch_size)
-    policy = WorldActionRecedingHorizonPolicyV4(
+    policy = WorldActionRecedingHorizonPolicy(
         model=model,
         execute_blocks=args.execute_blocks,
         device="cuda",
@@ -75,7 +75,7 @@ def main() -> None:
     )
 
     # The evaluator needs state only to recreate the dataset's initial Push-T
-    # simulator state. State never enters the V4 model or policy.
+    # simulator state. State never enters the WA-JEPA model or policy.
     dataset = swm.data.HDF5Dataset(
         "pusht_expert_train",
         keys_to_cache=["action", "proprio", "state"],
@@ -131,7 +131,7 @@ def main() -> None:
     plan_success = np.asarray(policy.plan_success_probabilities, dtype=np.float32)
     plan_distance = np.asarray(policy.plan_goal_distances, dtype=np.float32)
     serializable = {
-        "architecture": "WA-JEPA-V4-1",
+        "architecture": "WA-JEPA",
         "is_smoke_test": bool(is_smoke),
         "selected_rows": selected.tolist(),
         "episodes": eval_episodes.tolist(),

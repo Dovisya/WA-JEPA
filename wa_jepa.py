@@ -1,9 +1,9 @@
-"""WA-JEPA V4 architecture used by V4-1 short-horizon training.
+"""WA-JEPA architecture for short-horizon goal-directed control.
 
 The network couples action proposals, causal latent-world prediction, and
 chunk-wise goal-discrepancy / future-scene-context feedback. It consumes
 images and proprioception; privileged simulator state is not a model input.
-The V4 class and checkpoint names are retained for compatibility.
+Existing checkpoint tensor names are preserved for weight compatibility.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from torch import nn
 
 
 @dataclass
-class WAJEPAV4Config:
+class WAJEPAConfig:
     image_size: int = 224
     embed_dim: int = 192
     history_size: int = 3
@@ -127,7 +127,7 @@ class QueryUpdate(nn.Module):
 class MultiLayerDINOSceneEncoder(nn.Module):
     """Fuse aligned intermediate DINOv2 patches into ordered scene slots."""
 
-    def __init__(self, cfg: WAJEPAV4Config) -> None:
+    def __init__(self, cfg: WAJEPAConfig) -> None:
         super().__init__()
         repo = Path(cfg.dino_repo)
         checkpoint = Path(cfg.dino_checkpoint)
@@ -225,7 +225,7 @@ class MultiLayerDINOSceneEncoder(nn.Module):
 class DenseWorldUpdateLayer(nn.Module):
     """Causally update every scene slot using context and executable actions."""
 
-    def __init__(self, cfg: WAJEPAV4Config) -> None:
+    def __init__(self, cfg: WAJEPAConfig) -> None:
         super().__init__()
         dim = cfg.embed_dim
         self.update = QueryUpdate(
@@ -277,7 +277,7 @@ class DenseWorldUpdateLayer(nn.Module):
 class DenseExecutableActionWorldModel(nn.Module):
     """Predict dense future scene slots and normalized future proprio."""
 
-    def __init__(self, cfg: WAJEPAV4Config) -> None:
+    def __init__(self, cfg: WAJEPAConfig) -> None:
         super().__init__()
         self.cfg = cfg
         dim = cfg.embed_dim
@@ -342,7 +342,7 @@ class DenseExecutableActionWorldModel(nn.Module):
 class SceneGoalEvaluator(nn.Module):
     """Score completion, progress, and distance from dense future/goal slots."""
 
-    def __init__(self, cfg: WAJEPAV4Config) -> None:
+    def __init__(self, cfg: WAJEPAConfig) -> None:
         super().__init__()
         dim = cfg.embed_dim
         self.future_norm = nn.LayerNorm(dim)
@@ -395,10 +395,10 @@ class SceneGoalEvaluator(nn.Module):
         }
 
 
-class WorldActionPlannerV4(nn.Module):
+class WorldActionPlanner(nn.Module):
     """Fixed-depth dense world/action interaction without online search."""
 
-    def __init__(self, cfg: WAJEPAV4Config) -> None:
+    def __init__(self, cfg: WAJEPAConfig) -> None:
         super().__init__()
         self.cfg = cfg
         dim = cfg.embed_dim
@@ -550,14 +550,14 @@ class WorldActionPlannerV4(nn.Module):
         }
 
 
-class WorldActionJEPAV4(nn.Module):
-    """Full V4 model used by training and receding-horizon deployment."""
+class WorldActionJEPA(nn.Module):
+    """WA-JEPA model used by training and receding-horizon deployment."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__()
         if "dino_layers" in kwargs:
             kwargs["dino_layers"] = tuple(kwargs["dino_layers"])
-        self.cfg = WAJEPAV4Config(**kwargs)
+        self.cfg = WAJEPAConfig(**kwargs)
         cfg = self.cfg
         dim = cfg.embed_dim
         self.encoder = MultiLayerDINOSceneEncoder(cfg)
@@ -603,7 +603,7 @@ class WorldActionJEPAV4(nn.Module):
                 for _ in range(cfg.goal_match_depth)
             ]
         )
-        self.planner = WorldActionPlannerV4(cfg)
+        self.planner = WorldActionPlanner(cfg)
         self.inverse_head = nn.Sequential(
             nn.LayerNorm(2 * dim),
             nn.Linear(2 * dim, 2 * dim),
@@ -618,7 +618,7 @@ class WorldActionJEPAV4(nn.Module):
         self.register_buffer("proprio_std", torch.ones(cfg.proprio_dim))
 
     @staticmethod
-    def _transformer_layer(cfg: WAJEPAV4Config) -> nn.Module:
+    def _transformer_layer(cfg: WAJEPAConfig) -> nn.Module:
         return nn.TransformerEncoderLayer(
             d_model=cfg.embed_dim,
             nhead=cfg.planner_heads,
@@ -854,7 +854,7 @@ class WorldActionJEPAV4(nn.Module):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            "format": "wa_jepa_v4",
+            "format": "wa_jepa",
             "epoch": int(epoch),
             "model_config": self.model_config,
             "model_state_dict": self.state_dict(),
@@ -869,10 +869,11 @@ class WorldActionJEPAV4(nn.Module):
         cls,
         path: str | Path,
         map_location: str | torch.device = "cpu",
-    ) -> tuple["WorldActionJEPAV4", dict[str, Any]]:
+    ) -> tuple["WorldActionJEPA", dict[str, Any]]:
         payload = torch.load(path, map_location=map_location, weights_only=False)
-        if payload.get("format") != "wa_jepa_v4":
-            raise ValueError(f"Unsupported WA-JEPA V4 checkpoint: {path}")
+        # Accept the historical identifier without exposing it in new outputs.
+        if payload.get("format") not in {"wa_jepa", "wa_jepa_v4"}:
+            raise ValueError(f"Unsupported WA-JEPA checkpoint: {path}")
         # Checkpoint tensors and state keys are unchanged. Relocate external
         # pretrained assets when loading checkpoints from another machine.
         config = dict(payload["model_config"])
@@ -883,7 +884,7 @@ class WorldActionJEPAV4(nn.Module):
             if os.environ.get(env):
                 config[key] = os.environ[env]
             elif not Path(config.get(key, "")).exists():
-                config[key] = getattr(WAJEPAV4Config(), key)
+                config[key] = getattr(WAJEPAConfig(), key)
         model = cls(**config)
         model.load_state_dict(payload["model_state_dict"], strict=True)
         return model, payload

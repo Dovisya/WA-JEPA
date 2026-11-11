@@ -1,4 +1,4 @@
-"""Train WA-JEPA V4 on the fixed 25-step Push-T goal task."""
+"""Train WA-JEPA on the fixed 25-step Push-T goal task."""
 
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ from lightning.pytorch.loggers import CSVLogger
 from torch.utils.data import DataLoader
 
 from runtime_utils import NoSIGReg, split_by_episode
-from wa_jepa_v4 import WorldActionJEPAV4
+from wa_jepa import WorldActionJEPA
 
 
-class WAJEPAV4LitModule(pl.LightningModule):
+class WAJEPALitModule(pl.LightningModule):
     def __init__(
         self,
-        model: WorldActionJEPAV4,
+        model: WorldActionJEPA,
         run_dir: str,
         learning_rate: float,
         representation_lr_scale: float,
@@ -45,7 +45,7 @@ class WAJEPAV4LitModule(pl.LightningModule):
         self.history_dropout_prob = history_dropout_prob
         self.full_goal_probability = full_goal_probability
         if sigreg_weight != 0:
-            raise ValueError("This release implements V4-1: SIGReg weight must be zero")
+            raise ValueError("WA-JEPA does not use SIGReg: its weight must be zero")
         self.sigreg = NoSIGReg()
         self.is_smoke_test = False
         self.save_hyperparameters(ignore=["model"])
@@ -321,11 +321,11 @@ class WAJEPAV4LitModule(pl.LightningModule):
             epoch=epoch,
             metadata={
                 "metrics": metrics,
-                "variant": "V4-1",
+                "architecture": "WA-JEPA",
                 "is_smoke_test": self.is_smoke_test,
             },
         )
-        print(f"WA-JEPA V4 weights saved: {path}")
+        print(f"WA-JEPA weights saved: {path}")
 
     def configure_optimizers(self):
         representation_prefixes = (
@@ -490,10 +490,10 @@ def main() -> None:
     val_loader = DataLoader(val_set, shuffle=False, drop_last=False, **loader_common)
 
     if args.resume_weights:
-        model, payload = WorldActionJEPAV4.load_weights(args.resume_weights)
-        print(f"Loaded V4 epoch {payload['epoch']} from {args.resume_weights}")
+        model, payload = WorldActionJEPA.load_weights(args.resume_weights)
+        print(f"Loaded WA-JEPA epoch {payload['epoch']} from {args.resume_weights}")
     else:
-        model = WorldActionJEPAV4(
+        model = WorldActionJEPA(
             refinement_steps=args.refinement_steps,
             world_depth=args.world_depth,
             scene_tokens=args.scene_tokens,
@@ -509,7 +509,7 @@ def main() -> None:
     run_dir = Path(args.run_dir)
     run_dir.mkdir(parents=True, exist_ok=False)
     configuration = {
-        "architecture": "WA-JEPA-V4-1",
+        "architecture": "WA-JEPA",
         "dataset": args.dataset_name,
         "dataset_samples": len(dataset),
         "train_samples": len(train_set),
@@ -544,7 +544,7 @@ def main() -> None:
         f"Episode split train={train_episodes:,}, val={val_episodes:,}; "
         f"clips train={len(train_set):,}, val={len(val_set):,}"
     )
-    print(f"V4 parameters={total:,}, trainable={trainable:,}")
+    print(f"WA-JEPA parameters={total:,}, trainable={trainable:,}")
     print("Goal task: fixed 5 blocks / 25 environment steps")
     print("Full-horizon samples directly supervise all five action chunks")
     print(
@@ -559,7 +559,7 @@ def main() -> None:
         print("Dry run complete; training was not started.")
         return
 
-    module = WAJEPAV4LitModule(
+    module = WAJEPALitModule(
         model=model,
         run_dir=str(run_dir),
         learning_rate=args.lr,

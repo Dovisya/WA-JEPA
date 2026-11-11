@@ -1,10 +1,10 @@
 # WA-JEPA 短期任务代码
 
-本目录只包含 **V4-1 短期目标到达实验**：PushT、TwoRoom、OGBench-Cube。网络结构、原训练损失及两条反馈路径均保留；V4-1 不使用 SIGReg。完整任务动作头、LIBERO、长期 AP 规划、其他架构变体、数据、权重和日志均未包含。
+本目录只包含 **WA-JEPA 短期目标到达实验**：PushT、TwoRoom、OGBench-Cube。网络结构、原训练损失及两条反馈路径均保留；WA-JEPA 不使用 SIGReg。完整任务动作头、LIBERO、长期 AP 规划、其他架构变体、数据、权重和日志均未包含。
 
 详细安装、数据格式、训练及评测命令见 [README.md](README.md)。在仓库根目录运行命令。训练/评测需要 Linux CUDA 环境，本地 Mac 可用于编辑和上传代码。
 
-- 网络：`wa_jepa_v4.py`；实际执行策略：`wa_policy_v4.py`。
+- 网络：`wa_jepa.py`；实际执行策略：`wa_policy.py`。
 - PushT 训练：`train_pusht.py`，默认 batch 512、20 epochs。
 - TwoRoom/Cube 训练：`train_tasks.py --task tworoom/cube`，默认 batch 128、10 epochs。
 - 评测：`eval_pusht.py`、`eval_tasks.py`，默认 50 个案例、目标间隔 25 步、执行预算 50 步。

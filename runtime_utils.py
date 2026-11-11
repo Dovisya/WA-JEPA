@@ -9,7 +9,7 @@ from torch.utils.data import Subset
 
 
 class NoSIGReg(torch.nn.Module):
-    """V4-1: zero regularization, preserving the original RNG consumption."""
+    """Zero regularization, preserving the training RNG consumption."""
 
     def forward(self, embeddings):
         torch.randn(embeddings.size(-1), 1024, device=embeddings.device)
