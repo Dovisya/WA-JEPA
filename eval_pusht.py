@@ -38,9 +38,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--no-video", action="store_true")
     parser.add_argument("--inference-batch-size", type=int, default=8)
-    parser.add_argument(
-        "--allow-smoke", action="store_true", help="For integration checks only"
-    )
     return parser.parse_args()
 
 
@@ -58,11 +55,6 @@ def main() -> None:
         raise ValueError("--execute-blocks must be between 1 and 5")
     torch.set_float32_matmul_precision("high")
     model, payload = WorldActionJEPA.load_weights(args.checkpoint)
-    is_smoke = payload.get(
-        "is_smoke_test", payload.get("metadata", {}).get("is_smoke_test", False)
-    )
-    if is_smoke and not args.allow_smoke:
-        raise ValueError("Smoke-test weights are not formal evaluation checkpoints")
     if args.inference_batch_size < 1:
         raise ValueError("Inference batch size must be positive")
     model = ChunkedPlanner(model, args.inference_batch_size)
@@ -132,7 +124,6 @@ def main() -> None:
     plan_distance = np.asarray(policy.plan_goal_distances, dtype=np.float32)
     serializable = {
         "architecture": "WA-JEPA",
-        "is_smoke_test": bool(is_smoke),
         "selected_rows": selected.tolist(),
         "episodes": eval_episodes.tolist(),
         "start_steps": eval_starts.tolist(),

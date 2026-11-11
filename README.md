@@ -4,6 +4,12 @@ Code for the **WA-JEPA** short-horizon experiments on **PushT, TwoRoom, and OGBe
 
 This release contains the network, training objectives, deployment policy, data preparation, and evaluation entry points. It does not include full-task policy heads, long-horizon planning, alternative architectures, datasets, checkpoints, or experiment logs.
 
+## TODO
+
+- [x] Release short-horizon goal-reaching code for PushT, TwoRoom, and OGBench-Cube.
+- [ ] **Coming soon:** long-horizon task code with high-level intermediate-goal planning and evaluation.
+- [ ] **Coming soon:** full-task training and evaluation code for Push-T and LIBERO-Goal, including policy-head adaptation and task configurations.
+
 ## Installation
 
 The tested setup is Linux, Python 3.10, an NVIDIA A40, CUDA 12.1 PyTorch wheels, and BF16. Training and evaluation expect a CUDA GPU; macOS can be used to edit the source.
@@ -78,7 +84,7 @@ python train_tasks.py --task tworoom --dataset-root data --run-dir runs/tworoom
 python train_tasks.py --task cube --dataset-root data --run-dir runs/cube
 ```
 
-Run these separately, or assign different GPUs through `CUDA_VISIBLE_DEVICES`. These are single-GPU training entry points. Use a new output directory for each run; existing runs are not overwritten. Lowering `--batch-size` is supported for smoke tests but changes the experimental configuration.
+Run these separately, or assign different GPUs through `CUDA_VISIBLE_DEVICES`. These are single-GPU training entry points. Use a new output directory for each run; existing runs are not overwritten. Changing `--batch-size` changes the experimental configuration.
 
 TwoRoom/Cube evaluate the new checkpoint after every epoch in a separate process. Pass `--skip-eval` to evaluate later. PushT saves one checkpoint per epoch; use the evaluation command below for each checkpoint. `--resume-weights` in `train_pusht.py` loads model weights only, not optimizer/scheduler state; it is not an exact interrupted-run resume.
 
@@ -88,8 +94,7 @@ TwoRoom/Cube evaluate the new checkpoint after every epoch in a separate process
 - Normalization statistics are computed with the original full-dataset procedure.
 - The goal curriculum keeps the 25-step goal with probability 0.5 and otherwise samples uniformly from the five chunk endpoints. Actions after a sampled early goal are masked as in the original trainer.
 - History dropout is disabled for TwoRoom's single-frame input. PushT/Cube use probability 0.25.
-- All original non-SIGReg training losses and auxiliary heads are retained. Removing their code would change the trained model. Their predictions do not rank candidate actions in the default deployment policy.
-- The zero-SIGReg module retains the original random-number draw to preserve the stochastic training sequence.
+- The training objectives and auxiliary heads are retained as used in the experiments. Auxiliary predictions do not rank candidate actions in the default deployment policy.
 - PushT retains its LambdaLR warmup/cosine schedule. TwoRoom/Cube retain stable-pretraining's `LinearWarmupCosineAnnealingLR`, advanced on every optimizer step. These schedules have not been unified.
 
 ## Short-horizon evaluation
@@ -111,20 +116,6 @@ Evaluation preserves the benchmark's original `len(valid)-1` case-sampling conve
 
 `--inference-batch-size` controls only how many environments are forwarded through the network together (default 8); it does not change the number of evaluated environments. TwoRoom/Cube validate the initial proprioception and cross-check terminal success against the physical environment state.
 
-## Smoke tests
-
-```bash
-python smoke_test.py --dataset-root data --batch-size 2
-python train_pusht.py --dataset-root data --run-dir runs/smoke_pusht \
-  --epochs 1 --batch-size 2 --num-workers 0 --limit-train-batches 1 --val-batches 1
-python train_tasks.py --task tworoom --dataset-root data --run-dir runs/smoke_tworoom \
-  --batch-size 2 --num-workers 0 --smoke-batches 1
-python train_tasks.py --task cube --dataset-root data --run-dir runs/smoke_cube \
-  --batch-size 2 --num-workers 0 --smoke-batches 1
-```
-
-Smoke checkpoints are marked and refused for normal benchmark scoring. `--allow-smoke` exists only for checking the evaluation pipeline. See [verification notes](docs/VERIFICATION.md) for the checks performed on this export.
-
 ## Source map
 
 | File | Role |
@@ -134,10 +125,10 @@ Smoke checkpoints are marked and refused for normal benchmark scoring. `--allow-
 | `train_pusht.py` | Shared training losses and PushT training |
 | `train_tasks.py` | TwoRoom/Cube data preparation, original split and training loop |
 | `eval_pusht.py` / `eval_tasks.py` | Short-horizon environment evaluation |
-| `runtime_utils.py` | Extracted dataset, hashing, microbatching, and no-SIGReg helpers |
+| `runtime_utils.py` | Dataset, hashing, inference microbatching, and training utilities |
 | `task_evaluation.py` | Per-epoch evaluation subprocess |
 | `config/eval/` | TwoRoom/Cube evaluation protocols |
-| `prepare_pusht.py` / `smoke_test.py` | Data conversion and integration checks |
+| `prepare_pusht.py` | PushT data conversion |
 
 The public model and policy are `WorldActionJEPA` and `WorldActionRecedingHorizonPolicy`. New checkpoints use the `wa_jepa` format; existing experiment checkpoints remain loadable without conversion.
 

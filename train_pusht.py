@@ -47,7 +47,6 @@ class WAJEPALitModule(pl.LightningModule):
         if sigreg_weight != 0:
             raise ValueError("WA-JEPA does not use SIGReg: its weight must be zero")
         self.sigreg = NoSIGReg()
-        self.is_smoke_test = False
         self.save_hyperparameters(ignore=["model"])
 
     def augment_history(
@@ -322,7 +321,6 @@ class WAJEPALitModule(pl.LightningModule):
             metadata={
                 "metrics": metrics,
                 "architecture": "WA-JEPA",
-                "is_smoke_test": self.is_smoke_test,
             },
         )
         print(f"WA-JEPA weights saved: {path}")
@@ -422,8 +420,6 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--resume-weights", default="")
-    parser.add_argument("--limit-train-batches", type=int, default=None)
-    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -555,9 +551,6 @@ def main() -> None:
     print(f"Cold-start history augmentation={args.history_dropout_prob:.1%}")
     print("Simulator state is not loaded or consumed")
     print(f"Run directory: {run_dir}")
-    if args.dry_run:
-        print("Dry run complete; training was not started.")
-        return
 
     module = WAJEPALitModule(
         model=model,
@@ -570,7 +563,6 @@ def main() -> None:
         history_dropout_prob=args.history_dropout_prob,
         full_goal_probability=args.full_goal_probability,
     )
-    module.is_smoke_test = args.limit_train_batches is not None
     logger = CSVLogger(save_dir=str(run_dir), name="metrics")
     trainer_kwargs = {
         "accelerator": "gpu",
@@ -585,8 +577,6 @@ def main() -> None:
         "num_sanity_val_steps": 1,
         "limit_val_batches": args.val_batches,
     }
-    if args.limit_train_batches is not None:
-        trainer_kwargs["limit_train_batches"] = args.limit_train_batches
     trainer = pl.Trainer(**trainer_kwargs)
     trainer.fit(
         module,

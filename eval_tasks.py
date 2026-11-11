@@ -108,9 +108,6 @@ def main():
         "--dataset-root", default=os.environ.get("LOCAL_DATASET_DIR", "data")
     )
     parser.add_argument("--num-eval", type=int, default=50)
-    parser.add_argument(
-        "--allow-smoke", action="store_true", help="For integration checks only"
-    )
     args = parser.parse_args()
     if args.inference_batch_size < 1 or not 0 <= args.cuda_memory_fraction <= 1:
         parser.error("Invalid inference resource limits")
@@ -120,10 +117,8 @@ def main():
     torch.set_float32_matmul_precision("high")
     model, payload = WorldActionJEPA.load_weights(args.checkpoint)
     provenance = payload["training_provenance"]
-    if (payload.get("is_smoke_test") and not args.allow_smoke) or provenance[
-        "task"
-    ] != args.task:
-        raise ValueError("Smoke-test checkpoint or task mismatch")
+    if provenance["task"] != args.task:
+        raise ValueError("Checkpoint task does not match the requested task")
     assert model.cfg.horizon == 5 and model.cfg.refinement_steps == 4
     relative = (
         "tworoom.h5" if args.task == "tworoom" else "ogbench/cube_single_expert.h5"
@@ -223,7 +218,6 @@ def main():
                     renderer.close()
         world.close()
     result = dict(
-        is_smoke_test=bool(payload.get("is_smoke_test")),
         task=args.task,
         epoch=int(payload["epoch"]),
         format=payload["format"],

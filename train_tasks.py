@@ -168,12 +168,6 @@ def parse_args():
     p.add_argument("--epochs", type=int, default=10)
     p.add_argument("--skip-eval", action="store_true")
     p.add_argument(
-        "--smoke-batches",
-        type=int,
-        default=0,
-        help="Real-data full-batch preflight, no formal accuracy",
-    )
-    p.add_argument(
         "--num-workers",
         type=int,
         default=2,
@@ -181,13 +175,7 @@ def parse_args():
     )
     p.add_argument("--prefetch-factor", type=int, default=1)
     a = p.parse_args()
-    if (
-        a.smoke_batches < 0
-        or a.num_workers < 0
-        or a.prefetch_factor < 1
-        or a.batch_size < 1
-        or a.epochs < 1
-    ):
+    if a.num_workers < 0 or a.prefetch_factor < 1 or a.batch_size < 1 or a.epochs < 1:
         p.error("Negative batch/worker count")
     return a
 
@@ -212,7 +200,6 @@ def main():
         dict(
             status="initializing",
             task=args.task,
-            is_smoke_test=bool(args.smoke_batches),
         ),
     )
     seed_all(3072)
@@ -244,12 +231,12 @@ def main():
     module = make_loss(model, root).cuda()
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(parameters, lr=5e-5, weight_decay=0.001)
-    train_batches = min(len(train_loader), args.smoke_batches or len(train_loader))
-    val_batches = min(len(val_loader), args.smoke_batches or len(val_loader))
+    train_batches = len(train_loader)
+    val_batches = len(val_loader)
     if train_batches == 0 or val_batches == 0:
         raise ValueError("Empty loader; check dataset and batch size")
-    epochs = 1 if args.smoke_batches else args.epochs
-    # At least two scheduler steps are needed for a one-batch smoke run.
+    epochs = args.epochs
+    # Keep the warmup/cosine schedule valid for very small datasets.
     scheduler = make_scheduler(optimizer, max(2, epochs * train_batches))
     config = dict(
         task=args.task,
@@ -285,7 +272,6 @@ def main():
         normalization={
             k: dict(mean=m.tolist(), std=s.tolist()) for k, (m, s) in stats.items()
         },
-        is_smoke_test=bool(args.smoke_batches),
         source_sha256={
             name: sha256_file(Path(__file__).with_name(name))
             for name in (
@@ -320,7 +306,6 @@ def main():
                 status="training",
                 epoch=epoch,
                 epochs=epochs,
-                is_smoke_test=bool(args.smoke_batches),
             ),
         )
         epoch_start = time.perf_counter()
@@ -411,7 +396,6 @@ def main():
             model_state_dict=model.state_dict(),
             metadata=dict(metrics=metrics, task=args.task),
             training_provenance=config,
-            is_smoke_test=bool(args.smoke_batches),
             optimizer=optimizer.state_dict(),
             scheduler=scheduler.state_dict(),
             rng=dict(
@@ -434,7 +418,7 @@ def main():
         print(
             f"SAVED {path} val action={metrics['val']['action_loss']:.6f}", flush=True
         )
-        if not args.smoke_batches and not args.skip_eval:
+        if not args.skip_eval:
             atomic_json(
                 root / "status.json",
                 dict(status="evaluating", epoch=epoch, checkpoint=str(path)),
@@ -457,8 +441,7 @@ def main():
         dict(
             status="completed",
             epochs=epochs,
-            is_smoke_test=bool(args.smoke_batches),
-            automatic_evaluations=0 if args.smoke_batches or args.skip_eval else epochs,
+            automatic_evaluations=0 if args.skip_eval else epochs,
         ),
     )
 
