@@ -2,6 +2,22 @@
 
 本目录只包含 **WA-JEPA 短期目标到达实验**：PushT、TwoRoom、OGBench-Cube。网络结构、训练目标及两条反馈路径均保留。完整任务动作头、LIBERO、长期 AP 规划、其他架构变体、数据、权重和日志均未包含。
 
+## 网络框架
+
+![WA-JEPA 网络框架：动作提案、未来预测与两条目标感知反馈路径](assets/figures/overview.png)
+
+**图 1：WA-JEPA 总体框架。** 模型通过动作提案、未来预测与目标感知反馈，在执行前迭代修正同一动作计划。目标差异残差反馈指导逐 chunk 的动作调整，未来场景上下文反馈为动作修正提供更细致的预测场景信息。
+
+## 短期任务实验
+
+![TwoRoom、PushT 和 Cube 上的短期目标到达成功率](assets/figures/short_horizon_results.png)
+
+**图 2：目标到达表现。** 在论文的短期评测设置下，WA-JEPA 在 TwoRoom、PushT 和 Cube 上分别取得 100%、96% 和 100% 的成功率。
+
+![短期任务计算开销：完整计划延迟、计算量与参数量](assets/figures/computational_cost.png)
+
+**图 3：NVIDIA A40 上的计算开销。** 完整计划生成延迟与神经网络计算量采用对数轴；参数量采用线性轴，并区分可训练参数与冻结参数。
+
 详细安装、数据格式、训练及评测命令见 [README.md](README.md)。在仓库根目录运行命令。训练/评测需要 Linux CUDA 环境，本地 Mac 可用于编辑和上传代码。
 
 - 网络：`wa_jepa.py`；实际执行策略：`wa_policy.py`。

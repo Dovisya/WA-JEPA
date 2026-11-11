@@ -10,6 +10,22 @@ This release contains the network, training objectives, deployment policy, data 
 - [ ] **Coming soon:** long-horizon task code with high-level intermediate-goal planning and evaluation.
 - [ ] **Coming soon:** full-task training and evaluation code for Push-T and LIBERO-Goal, including policy-head adaptation and task configurations.
 
+## Framework
+
+![WA-JEPA framework: action proposals, world prediction, and two goal-aware feedback paths](assets/figures/overview.png)
+
+**Fig. 1. WA-JEPA overview.** The model refines the same action plan before execution through action proposal, future prediction, and goal-aware feedback. Goal-discrepancy residual feedback guides chunk-wise corrections; future-scene context feedback provides detailed predicted scene information for action refinement.
+
+## Short-horizon results
+
+![Short-horizon goal-reaching success on TwoRoom, PushT, and Cube](assets/figures/short_horizon_results.png)
+
+**Fig. 2. Goal-reaching performance.** WA-JEPA achieves 100%, 96%, and 100% success on TwoRoom, PushT, and Cube, respectively, under the paper's short-horizon evaluation protocol.
+
+![Short-horizon computational cost: plan latency, FLOPs, and model parameters](assets/figures/computational_cost.png)
+
+**Fig. 3. Computational cost on an NVIDIA A40.** Complete-plan latency and neural computation use logarithmic axes. The parameter comparison uses a linear axis and distinguishes trainable and frozen parameters.
+
 ## Installation
 
 The tested setup is Linux, Python 3.10, an NVIDIA A40, CUDA 12.1 PyTorch wheels, and BF16. Training and evaluation expect a CUDA GPU; macOS can be used to edit the source.
