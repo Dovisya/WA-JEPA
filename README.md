@@ -26,6 +26,23 @@ This release contains the network, training objectives, deployment policy, data 
 
 **Fig. 3. Computational cost on an NVIDIA A40.** Complete-plan latency and neural computation use logarithmic axes. The parameter comparison uses a linear axis and distinguishes trainable and frozen parameters.
 
+## Full-task results
+
+**Tab. 2. Full-task performance and computational cost.** Push-T reports final coverage and LIBERO-Goal reports task success, both as percentages (mean ± available standard deviation). Bold marks the best values within each task.
+
+| Method | Head | Push-T (%) ↑ | LIBERO-Goal (%) ↑ | Params. (M) ↓ | Mem. (MiB) ↓ | FLOPs (G) ↓ | Latency (ms) ↓ |
+|:---|:---|---:|---:|---:|---:|---:|---:|
+| WebSSL (CLS) | VQ-BeT | 59 ± 1 | 95 ± 1 | 332.7 / 308.0 | 665.0 / 647.3 | 162.5 / 324.6 | 19.20 / 17.49 |
+| Patch Policy | VQ-BeT | 68 ± 3 | 94 ± 1 | 334.0 / 308.7 | 894.5 / 2552.6 | 255.2 / 413.5 | 26.49 / 81.35 |
+| ResNet-18 Patch | ACT | 64 ± 3 | 93 ± 2 | 66.5 / 66.7 | 144.0 / 152.6 | **6.1** / **11.9** | **11.87** / **12.01** |
+| OpenVLA-OFT | MLP | 59 ± 2 | 95 | 7608.4 / 7709.2 | 14837.7 / 15331.6 | 4202.6 / 8766.6 | 91.13 / 147.16 |
+| Fast-WAM | Flow matching | — | 96 | 12406.3 | 23959.7 | 2545.1 | 438.53 |
+| RynnVLA-002 | Regression | — | 96 | 7150.3 | 15429.3 | 16297.3 | 436.55 |
+| DreamVLA | Diffusion | — | 86 | 734.0 | 1515.7 | 1001.8 | 85.77 |
+| **WA-JEPA** | VQ-BeT | **71 ± 2** | **97 ± 1** | **37.2** / **37.8** | **92.2** / **115.6** | 13.5 / 26.5 | 27.21 / 26.95 |
+
+Cost pairs follow **Push-T / LIBERO-Goal**; a single cost value refers to **LIBERO-Goal only**. “—” denotes an unreported result. Costs are measured on an NVIDIA A40 with BF16 and batch size 1. Memory is peak allocated GPU memory; latency covers one complete online planning call that generates an action chunk. Full-task training and evaluation code is coming soon.
+
 ## Installation
 
 The tested setup is Linux, Python 3.10, an NVIDIA A40, CUDA 12.1 PyTorch wheels, and BF16. Training and evaluation expect a CUDA GPU; macOS can be used to edit the source.
