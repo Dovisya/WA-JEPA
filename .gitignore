@@ -20,3 +20,7 @@ third_party/
 *.mp4
 wandb/
 lightning_logs/
+
+.venv-fulltask/
+.libero_fulltask/
+cache/

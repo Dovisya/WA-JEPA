@@ -1,14 +1,12 @@
-# WA-JEPA — Short-Horizon Goal Reaching
+# WA-JEPA
 
-Code for the **WA-JEPA** short-horizon experiments on **PushT, TwoRoom, and OGBench-Cube**.
+Code for **WA-JEPA**, including short-horizon goal reaching on **PushT, TwoRoom, and OGBench-Cube**, and full-task execution on **Push-T and LIBERO-Goal**.
 
-This release contains the network, training objectives, deployment policy, data preparation, and evaluation entry points. It does not include full-task policy heads, long-horizon planning, alternative architectures, datasets, checkpoints, or experiment logs.
+This release contains the networks, training objectives, deployment policies, data preparation, and evaluation entry points. Long-horizon AP planning code, datasets, checkpoints, and experiment logs are not included.
 
-## TODO
+## Full-task code
 
-- [x] Release short-horizon goal-reaching code for PushT, TwoRoom, and OGBench-Cube.
-- [ ] **Coming soon:** long-horizon task code with high-level intermediate-goal planning and evaluation.
-- [ ] **Coming soon:** full-task training and evaluation code for Push-T and LIBERO-Goal, including policy-head adaptation and task configurations.
+Training and evaluation for **Push-T and LIBERO-Goal** with the paper's **VQ-BeT action head** are now available in [`fulltask/`](fulltask). See the [full-task guide](docs/fulltask.md) for the separate environment, dataset preparation, codebook pretraining, multi-GPU launchers, optional fine-tuning, and evaluation.
 
 ## Framework
 
@@ -41,9 +39,9 @@ This release contains the network, training objectives, deployment policy, data 
 | DreamVLA | Diffusion | — | 86 | 734.0 | 1515.7 | 1001.8 | 85.77 |
 | **WA-JEPA** | VQ-BeT | **71 ± 2** | **97 ± 1** | **37.2** / **37.8** | **92.2** / **115.6** | 13.5 / 26.5 | 27.21 / 26.95 |
 
-Cost pairs follow **Push-T / LIBERO-Goal**; a single cost value refers to **LIBERO-Goal only**. “—” denotes an unreported result. Costs are measured on an NVIDIA A40 with BF16 and batch size 1. Memory is peak allocated GPU memory; latency covers one complete online planning call that generates an action chunk. Full-task training and evaluation code is coming soon.
+Cost pairs follow **Push-T / LIBERO-Goal**; a single cost value refers to **LIBERO-Goal only**. “—” denotes an unreported result. Costs are measured on an NVIDIA A40 with BF16 and batch size 1. Memory is peak allocated GPU memory; latency covers one complete online planning call that generates an action chunk. Full-task training and evaluation instructions are provided in the [full-task guide](docs/fulltask.md).
 
-## Installation
+## Short-horizon installation
 
 The tested setup is Linux, Python 3.10, an NVIDIA A40, CUDA 12.1 PyTorch wheels, and BF16. Training and evaluation expect a CUDA GPU; macOS can be used to edit the source.
 

@@ -1,0 +1,28 @@
+# Separate full-task environment (Python 3.9); do not combine with requirements.txt.
+# Install torch==2.7.1 and torchvision==0.22.1 CUDA wheels first.
+numpy==1.26.4
+accelerate==0.26.1
+einops==0.8.2
+gym==0.23.1
+pymunk==6.8.0
+pygame==2.5.2
+shapely==2.0.7
+scipy==1.13.1
+scikit-image==0.24.0
+opencv-python==4.10.0.84
+pillow==10.3.0
+robosuite==1.4.1
+mujoco==3.2.7
+bddl==1.0.1
+h5py==3.11.0
+hydra-core==1.2.0
+omegaconf==2.3.0
+av==12.0.0
+timm==1.0.27
+tqdm==4.66.4
+cloudpickle==2.1.0
+PyOpenGL==3.1.7
+PyYAML==6.0.1
+matplotlib==3.9.4
+numba==0.60.0
+huggingface_hub==0.36.2
